@@ -1,0 +1,31 @@
+name: IRCC latest news
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ircc-news
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install feedparser python-dateutil
+      - name: Build ircc_latest.json
+        run: python scripts/ircc_latest.py
+      - name: Commit JSON
+        run: |
+          git config user.name "news-bot"
+          git config user.email "news-bot@users.noreply.github.com"
+          git add docs/ircc_latest.json
+          git commit -m "update ircc_latest.json" || echo "No changes"
+          git push
